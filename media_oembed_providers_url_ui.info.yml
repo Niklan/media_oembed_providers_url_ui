@@ -1,0 +1,8 @@
+name: oEmbed Providers URL UI
+type: module
+description: Adds UI for edititing oEmbed Providers URL setting.
+core: 8.x
+dependencies:
+  - drupal:media
+  - drupal:system (>=8.6.0)
+configure: media.settings

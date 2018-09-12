@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for oEmbed Providers URL UI module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use GuzzleHttp\Exception\ConnectException;
+
+/**
+ * Implements hook_form_FORM_ID_alter() for media_settings_form.
+ *
+ * Alter form to add editable field for oembed_providers_url configuration.
+ * See https://www.drupal.org/project/drupal/issues/2999018 for more info.
+ */
+function media_oembed_providers_url_ui_form_media_settings_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $configuration = \Drupal::config('media.settings');
+
+  $description = '<p>' . t('If for some reasons you need to change oEmbed providers URL. You can change it here.') . '</p>';
+  $description .= '<p>' . t('For more information, see the <a href=":issue_url">issue</a>.', [':issue_url' => 'https://www.drupal.org/project/drupal/issues/2999018']) . '</p>';
+
+  $form['oembed_providers'] = [
+    '#type' => 'details',
+    '#title' => t('oEmbed Providers'),
+    '#open' => TRUE,
+    '#description' => $description,
+  ];
+
+  $form['oembed_providers']['oembed_providers_url'] = [
+    '#type' => 'url',
+    '#title' => t('oEmbed Providers URL'),
+    '#size' => 40,
+    '#maxlength' => 255,
+    '#default_value' => $configuration->get('oembed_providers_url'),
+    '#required' => TRUE,
+  ];
+
+  $form['#validate'][] = 'media_oembed_providers_url_ui_form_media_settings_form_validate';
+  $form['#submit'][] = 'media_oembed_providers_url_ui_form_media_settings_form_submit';
+}
+
+/**
+ * Custom form validation handler for media_settings_form.
+ */
+function media_oembed_providers_url_ui_form_media_settings_form_validate($form, FormStateInterface &$form_state) {
+  $client = \Drupal::httpClient();
+  $oembed_providers_url = $form_state->getValue('oembed_providers_url');
+
+  try {
+    $request = $client->get($oembed_providers_url);
+    $status_code = $request->getStatusCode();
+
+    if ($status_code != 200) {
+      $message = t("Error trying to access provided oEmbed Providers URL. Request ended with code @request_code and message @request_message.", [
+        '@request_code' => $request->getStatusCode(),
+        '@request_message' => $request->getBody()->getContents(),
+      ]);
+
+      $form_state->setErrorByName('oembed_providers_url', $message);
+    }
+  }
+  catch (ConnectException $exception) {
+    $message = t("Error trying to access provided oEmbed Providers URL. Error message: @error_message", [
+      '@error_message' => $exception->getMessage(),
+    ]);
+
+    $form_state->setErrorByName('oembed_providers_url', $message);
+  }
+}
+
+/**
+ * Custom form submit handler for media_settings_form.
+ */
+function media_oembed_providers_url_ui_form_media_settings_form_submit($form, FormStateInterface &$form_state) {
+  $oembed_providers_url = $form_state->getValue('oembed_providers_url');
+
+  $config_factory = \Drupal::configFactory();
+  $config_factory->getEditable('media.settings')
+    ->set('oembed_providers_url', $oembed_providers_url)
+    ->save();
+}

@@ -1,0 +1,17 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the oEmbed Providers URL UI
+ *   module.
+ */
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function media_oembed_providers_url_ui_uninstall() {
+  // Return default value on module uninstall.
+  \Drupal::config('media.settings')
+    ->set('oembed_providers_url', 'https://oembed.com/providers.json');
+}

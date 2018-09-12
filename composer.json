@@ -1,0 +1,6 @@
+{
+  "name": "drupal/media_oembed_providers_url_ui",
+  "type": "drupal-module",
+  "description": "Adds UI for edititing oEmbed Providers URL setting.",
+  "keywords": ["Drupal"]
+}
